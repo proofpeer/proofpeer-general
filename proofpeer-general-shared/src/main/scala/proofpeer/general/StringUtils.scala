@@ -106,7 +106,7 @@ object CaseInsensitiveString {
   def apply(content : String) = new CaseInsensitiveString(content)
 }
 
-class CaseInsensitiveMap[T] private (mapping : Map[CaseInsensitiveString, T]) {
+class CaseInsensitiveMap[T] private (private val mapping : Map[CaseInsensitiveString, T]) {
   def get(key : String) : Option[T] = {
     mapping.get(CaseInsensitiveString(key))
   }
@@ -118,6 +118,16 @@ class CaseInsensitiveMap[T] private (mapping : Map[CaseInsensitiveString, T]) {
   }
   def keys : Set[String] = {
     mapping.keys.map(_.toString).toSet
+  }
+  def ++ (that : CaseInsensitiveMap[T]) : CaseInsensitiveMap[T] = {
+    new CaseInsensitiveMap(mapping ++ that.mapping)
+  }
+  override def hashCode : Int = mapping.hashCode
+  override def equals(that : Any) : Boolean = {
+    that match {
+      case s : CaseInsensitiveMap[_] => mapping.equals(s.mapping)
+      case _ => false
+    }
   }
 }
 
