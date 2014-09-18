@@ -42,6 +42,38 @@ object StringUtils {
     }
     v
   }
+
+  def utf8(s : String) : Vector[Byte] = {
+    var v : Vector[Byte] = Vector()
+    val codes = codePoints(s)
+    for (code <- codes) {
+      if (code <= 0x7F) {
+        v = v :+ code.toByte       
+      } else if (code <= 0x7FF) {
+        val b1 = 0xC0 | ((code >> 6) & 0x1F)
+        val b2 = 0x80 | (code & 0x3F)
+        v = v :+ b1.toByte
+        v = v :+ b2.toByte        
+      } else if (code <= 0xFFFF) {
+        val b1 = 0xE0 | ((code >> 12) & 0xF)
+        val b2 = 0x80 | ((code >> 6) & 0x3F)
+        val b3 = 0x80 | (code & 0x3F)
+        v = v :+ b1.toByte
+        v = v :+ b2.toByte        
+        v = v :+ b3.toByte                
+      } else {
+        val b1 = 0xF0 | ((code >> 18) & 0x7)
+        val b2 = 0x80 | ((code >> 12) & 0x3F)
+        val b3 = 0x80 | ((code >> 6) & 0x3F)
+        val b4 = 0x80 | (code & 0x3F)
+        v = v :+ b1.toByte
+        v = v :+ b2.toByte        
+        v = v :+ b3.toByte
+        v = v :+ b4.toByte                        
+      }
+    }
+    v
+  }
   
   def replaceAll(oldS : String, newS : String, content : String) : String = {
     val oldLen = oldS.length()
