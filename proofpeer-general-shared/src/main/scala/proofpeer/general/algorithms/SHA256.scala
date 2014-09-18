@@ -1,5 +1,7 @@
 package proofpeer.general.algorithms
 
+import proofpeer.general.StringUtils
+
 /** Computes SHA-256 hash values. 
   * Based on the pseudo code at http://en.wikipedia.org/wiki/SHA-2#Pseudocode
   */ 
@@ -134,7 +136,7 @@ object SHA256 {
     compute(BitStream.BigEndian.fromBytes(bytes : _*))
 
   def compute(s : String) : Array[Byte] = {
-    val bytes = proofpeer.general.StringUtils.utf8(s)
+    val bytes = StringUtils.utf8Bytes(s)
     compute(bytes : _*)
   }
 

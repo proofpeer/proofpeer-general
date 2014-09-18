@@ -43,7 +43,7 @@ object StringUtils {
     v
   }
 
-  def utf8(s : String) : Vector[Byte] = {
+  def utf8Bytes(s : String) : Vector[Byte] = {
     var v : Vector[Byte] = Vector()
     val codes = codePoints(s)
     for (code <- codes) {
