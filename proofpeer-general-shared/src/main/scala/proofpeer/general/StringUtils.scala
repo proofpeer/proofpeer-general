@@ -117,6 +117,14 @@ object StringUtils {
     split(s, sep).filter(!_.isEmpty())
   }
 
+  def escapeHtml(text : String) : String = {
+    val e0 = replaceAll("&", "&ampersand;", text)
+    val e1 = replaceAll("\"", "&quot;", e0)
+    val e2 = replaceAll("<", "&lt;", e1)
+    val e3 = replaceAll(">", "&gt;", e2)
+    e3
+  }  
+
 }
 
 class CaseInsensitiveString private (content : String) {
