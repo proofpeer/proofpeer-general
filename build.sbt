@@ -20,6 +20,7 @@ lazy val rootJVM = project.in(file("proofpeer-general-jvm")).settings(
   name := "proofpeer-general",
   organization := "net.proofpeer",
   scalaVersion := "2.11.2",
+  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test",
   unmanagedSourceDirectories in Compile +=
     (baseDirectory.value / "..") / "proofpeer-general-shared" / "src" / "main" / "scala"
 )

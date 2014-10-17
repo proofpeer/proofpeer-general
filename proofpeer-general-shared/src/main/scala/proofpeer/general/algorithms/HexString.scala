@@ -18,4 +18,30 @@ object HexString {
     new String(hexChars)
   }
 
+  private def valueOfHexChar(c : Char) : Option[Byte] = {
+    if (c >= '0' && c <= '9') 
+      Some((c - '0').toByte)
+    else if (c >= 'a' && c <= 'f')
+      Some(((c - 'a') + 10).toByte)
+    else if (c >= 'A' && c <= 'F')
+      Some(((c - 'A') + 10).toByte)
+    else
+      None
+  }
+
+  def toBytes(hexStr : String) : Option[Array[Byte]] = {
+    val len = hexStr.length
+    if (len % 2 != 0) return None
+    val bytes = new Array[Byte](len / 2)
+    for (i <- 0 until len / 2) {
+      (valueOfHexChar(hexStr(2*i)), valueOfHexChar(hexStr(2*i+1))) match {
+        case (Some(hi), Some(lo)) =>
+          bytes(i) = ((hi << 4) | lo).toByte
+        case _ =>
+          return None
+      }
+    }
+    Some(bytes)
+  }
+
 }
