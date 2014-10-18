@@ -43,6 +43,22 @@ object StringUtils {
     v
   }
 
+  def fromCodePoints(cps : Vector[Int]) : String = {
+    val builder = new StringBuilder(cps.size)
+    for (codepoint <- cps) {
+      if ((codepoint >= 0 && codepoint <= 0xD7FF) || (codepoint >= 0xE000 && codepoint <= 0xFFFF)) {
+        builder.append(codepoint.toChar)
+      } else if (codepoint >= 0x10000 && codepoint <= 0x10FFFF) {
+        val cp = codepoint - 0x10000
+        val hi = ((cp >> 10) & 0x3FF) + 0xD800
+        val lo = (cp & 0x3FF) + 0xDC00
+        builder.append(hi.toChar)
+        builder.append(lo.toChar)
+      } else throw new RuntimeException("invalid codepoint: " + codepoint)
+    }
+    builder.toString
+  }
+
   def utf8Bytes(s : String) : Vector[Byte] = {
     var v : Vector[Byte] = Vector()
     val codes = codePoints(s)
@@ -73,6 +89,35 @@ object StringUtils {
       }
     }
     v
+  }
+
+  def utf8Bytes2Codepoints(bytes : Vector[Byte]) : Vector[Int] = {
+    var codepoints : Array[Int] = new Array(bytes.size)
+    var i = 0
+    var j = 0
+    val len = bytes.size
+    while (i < len) {
+      var c : Int = bytes(i) & 0xFF
+      if ((c >> 7 & 1) == 0) { // 1 Byte Sequence
+        i += 1
+      } else if (((c >> 5) & 7) == 6) { // 2 Byte Sequence
+        c = ((c & 0x1F) << 6) + (bytes(i + 1) & 0x3F)
+        i += 2
+      } else if (((c >> 4) & 15) == 14) { // 3 Byte Sequence
+        c = ((c & 15) << 12) + ((bytes(i + 1) & 0x3F) << 6) + (bytes(i + 2) & 0x3F)
+        i += 3
+      } else if (((c >> 3) & 31) == 30) { // 4 Byte Sequence
+        c = ((c & 7) << 18) + ((bytes(i + 1) & 0x3F) << 12) + ((bytes(i + 2) & 0x3F) << 6) + (bytes(i + 3) & 0x3F)
+        i += 4
+      } else throw new RuntimeException("bytes encoding is not UTF8")
+      codepoints(j) = c
+      j += 1
+    }
+    codepoints.take(j).toVector
+  }
+
+  def fromUtf8Bytes(bytes : Vector[Byte]) : String = {
+    fromCodePoints(utf8Bytes2Codepoints(bytes))
   }
   
   def replaceAll(oldS : String, newS : String, content : String) : String = {
