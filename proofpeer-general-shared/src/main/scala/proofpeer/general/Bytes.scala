@@ -1,6 +1,6 @@
 package proofpeer.general
 
-class Bytes private (val bytes : Vector[Byte]) {
+class Bytes private (bytes : Vector[Byte]) {
   
   /** The length of this byte sequence. */
   def length : Int = bytes.size
@@ -9,7 +9,7 @@ class Bytes private (val bytes : Vector[Byte]) {
   def isEmpty = bytes.isEmpty
 
   /** Concatenates this and B. */
-  def ++ (B : Bytes) = new Bytes(bytes ++ B.bytes)
+  def ++ (B : Bytes) = new Bytes(bytes ++ B.toVector)
   
   /** Returns the byte sequence that starts at position from and has length len. */
   def sub (from : Int, len : Int) : Bytes = new Bytes(bytes.drop(from).take(len))
@@ -20,12 +20,15 @@ class Bytes private (val bytes : Vector[Byte]) {
   /** Returns the i-th element of the byte sequence. */
   def apply (i : Int) : Byte = bytes(i)
 
+  def toArray : Array[Byte] = bytes.toArray
+
+  def toVector : Vector[Byte] = bytes
 
   override def hashCode : Int = bytes.hashCode
   
   override def equals(other : Any) : Boolean = {
     other match {
-      case other : Bytes => bytes == other.bytes
+      case other : Bytes => bytes == other.toVector
       case _ => false
     }
   }
@@ -73,7 +76,7 @@ object Bytes {
 
   /** Constructs a byte sequence from an array of bytes. */
   def apply(bytes : Array[Byte]) : Bytes = {
-    Bytes(bytes.toVector)
+    new Bytes(bytes.toVector)
   }
 
   /** Constructs a byte sequence from the specified individual bytes. */
