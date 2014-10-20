@@ -195,11 +195,13 @@ object Bytes {
   /** Encodes a value of generic type as Bytes. The values of the following types are encodable:
     *  - Byte (will be decoded as Long)
     *  - Short (will be decoded as Long)
+    *  - Char (will be decoded as Long)
     *  - Int (will be decoded as Long)
     *  - Long 
     *  - String
     *  - Bytes
-    *  - Seq[T] where T is encodable (will be decoded as Vector[T])
+    *  - Seq[T], where T is encodable (will be decoded as Vector[Any])
+    *  - Product, where the elements of the product are encodable (will be decoded as Vector[Any])
     * The encoding tries to be space-efficient without actually using any compression algorithms.
     * For example, the value Vector(1L, -5L, 11L) will be represented with a byte sequence of length 4, but the value
     * Vector(Long.MaxValue, Long.MinValue, Long.MaxValue) uses 28 bytes. 
@@ -209,6 +211,7 @@ object Bytes {
       case x : Long => encodeLong(x)
       case x : Int => encodeLong(x)
       case x : Short => encodeLong(x)
+      case x : Char => encodeLong(x)
       case x : Byte => encodeLong(x)
       case x : String => 
         val utf8 = fromString(x)
@@ -218,21 +221,25 @@ object Bytes {
           join(Bytes(mkcode(CODE_STRING)), encodeNat(utf8.length - 63), utf8)
       case x : Bytes if x.length <= 62 => join(Bytes(mkcode(CODE_BYTES, x.length)), x)
       case x : Bytes => join(Bytes(mkcode(CODE_BYTES)), encodeNat(x.length - 63), x)
-      case x : Seq[_] => 
-        var b : List[Bytes] = List()
-        var size : Long = 0
-        for (elem <- x) {
-          b = encode(elem) :: b
-          size += 1
-        }
-        b = 
-          if (size <= 62) 
-            Bytes(mkcode(CODE_VECTOR, size.toInt)) :: b.reverse
-          else 
-            Bytes(mkcode(CODE_VECTOR)) :: encodeNat(size - 63) :: b.reverse
-        join(b : _*)
+      case x : Seq[_] => encodeIterator(x.iterator)
+      case x : Product => encodeIterator(x.productIterator)
       case _ => error("encode: " + x)
     }
+  }
+
+  private def encodeIterator(iterator : Iterator[Any]) : Bytes = {
+    var b : List[Bytes] = List()
+    var size : Long = 0
+    for (elem <- iterator) {
+      b = encode(elem) :: b
+      size += 1
+    }
+    b = 
+      if (size <= 62) 
+        Bytes(mkcode(CODE_VECTOR, size.toInt)) :: b.reverse
+      else 
+        Bytes(mkcode(CODE_VECTOR)) :: encodeNat(size - 63) :: b.reverse
+    join(b : _*)
   }
 
   private def mkcode(type_code : Int, value : Int = 63) : Byte = {
@@ -449,7 +456,8 @@ object Bytes {
   }
 
   /** Encodes the same kind of values as [[encode]] into strings. These strings are just treated
-    * as sequences of 16-bit code units and do not necessarily contain valid Unicode text. */
+    * as sequences of 16-bit code units and do not necessarily contain valid Unicode text. 
+    */
   def encodeToUCS2(value : Any) : String = {
     val bytes = encode(value)
     val len = bytes.length
