@@ -17,6 +17,20 @@ object StringUtils {
   def isASCIIDigit(c : Char) : Boolean = {
     (c >= '0' && c <= '9')
   }  
+
+  def toLowerCase(codepoint : Int) : Int = {
+    if (codepoint >= 'A' && codepoint <= 'Z') 
+      codepoint + 32
+    else
+      codepoint
+  }
+
+  def toUpperCase(codepoint : Int) : Int = {
+    if (codepoint >= 'a' && codepoint <= 'z')
+      codepoint - 32
+    else
+      codepoint
+  }
   
   def charCount(codepoint : Int) : Int = if (codepoint >= 0x10000) 2 else 1
   
