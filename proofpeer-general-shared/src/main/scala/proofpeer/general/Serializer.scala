@@ -208,12 +208,12 @@ trait CaseClassSerializerBase[T] extends Serializer[T, Vector[Any]] {
 /** Use this tool to generate code which implements a CaseClassSerializerBase[typename] */
 class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename : String = "Any") {
 
-  /** You can make the encoding more efficient by overriding this method and detecting additional 
-    * serializers which are guaranteed to have vectors as result. */
-  protected def isVectorSerializer(serializerSpec : String) : Boolean = {
-    val prefixes = Vector("VectorSerializer(", "ListSerializer(", "MapSerializer(", "PairSerializer(", 
-      "TripleSerializer(", "OptionSerializer(")
-    prefixes.exists(prefix => serializerSpec.startsWith(prefix))
+  /** Override and correct this method if you get type checking errors from the generated code. */
+  protected def isVectorSerializer(serializerSpec : String) : Boolean = !isAtomicSerializer(serializerSpec)
+
+  protected def isAtomicSerializer(serializerSpec : String) : Boolean = {
+    val atomicSerializers = Vector("StringSerializer", "BooleanSerializer", "IntSerializer", "LongSerializer", "BigIntSerializer")
+    atomicSerializers.contains(serializerSpec)
   }
 
   private def normalizeCase(c : Any) : (String, Vector[String]) = {
