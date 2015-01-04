@@ -97,6 +97,36 @@ object TripleSerializer {
 
 }
 
+object QuadrupleSerializer {
+
+  def apply[U, V, W, X](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _]) : Serializer[(U, V, W, X), Vector[Any]] = 
+    new Serializer[(U, V, W, X), Vector[Any]] {
+      def serialize(uvwx : (U, V, W, X)) : Vector[Any] = Vector(sU.serialize(uvwx._1), sV.serialize(uvwx._2), sW.serialize(uvwx._3), sX.serialize(uvwx._4))
+      def deserialize(b : Any) : (U, V, W, X) = {
+        b match {
+          case Vector(u, v, w, x) => (sU.deserialize(u), sV.deserialize(v), sW.deserialize(w), sX.deserialize(x))
+          case _ => throw new RuntimeException("QuadrupleSerializer: cannot deserialize " + b)
+        }
+      }
+    }
+
+}
+
+object QuintupleSerializer {
+
+  def apply[U, V, W, X, Y](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _], sY : Serializer[Y, _]) : Serializer[(U, V, W, X, Y), Vector[Any]] = 
+    new Serializer[(U, V, W, X, Y), Vector[Any]] {
+      def serialize(uvwxy : (U, V, W, X, Y)) : Vector[Any] = Vector(sU.serialize(uvwxy._1), sV.serialize(uvwxy._2), sW.serialize(uvwxy._3), sX.serialize(uvwxy._4), sY.serialize(uvwxy._5))
+      def deserialize(b : Any) : (U, V, W, X, Y) = {
+        b match {
+          case Vector(u, v, w, x, y) => (sU.deserialize(u), sV.deserialize(v), sW.deserialize(w), sX.deserialize(x), sY.deserialize(y))
+          case _ => throw new RuntimeException("QuintupleSerializer: cannot deserialize " + b)
+        }
+      }
+    }
+
+}
+
 object OptionSerializer {
 
   def apply[U, A](serializer : Serializer[U, A]) : Serializer[Option[U], Vector[A]] = {
@@ -222,6 +252,8 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
       case (s : String, t1 : String) => (s, Vector(t1))
       case (s : String, t1 : String, t2 : String) => (s, Vector(t1, t2))
       case (s : String, t1 : String, t2 : String, t3 : String) => (s, Vector(t1, t2, t3))
+      case (s : String, t1 : String, t2 : String, t3 : String, t4 : String) => (s, Vector(t1, t2, t3, t4))
+      case (s : String, t1 : String, t2 : String, t3 : String, t4 : String, t5 : String) => (s, Vector(t1, t2, t3, t4, t5))
       case (s : String, args : Vector[Any]) => (s, args.map(_.toString))
       case _ => throw new RuntimeException("cannot normalize case: " + c)
     }
@@ -251,6 +283,8 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
             n match {
               case 2 => "PairSerializer"
               case 3 => "TripleSerializer"
+              case 4 => "QuadrupleSerializer"
+              case 5 => "QuintupleSerializer"
               case _ => throw new RuntimeException("cannot serialize tuples of arity " + n)
             }
           serializer = serializer + "(" + args(0)
@@ -331,6 +365,28 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
 
   def main(args : Array[String]) {
     output()
+  }
+
+}
+
+class SpecializedSerializer[T, S <: T, A](serializer : Serializer[T, A]) extends Serializer[S, A] {
+
+  def serialize(special : S) : A = serializer.serialize(special)
+
+  def deserialize(serialized : Any) : S = {
+    serializer.deserialize(serialized).asInstanceOf[S]
+  }
+
+}
+
+class DummySerializer[T, A] extends Serializer[T, A] {
+
+  def serialize(t : T) : A = {
+    throw new RuntimeException("DummySerializer: cannot serialize anything")
+  }
+
+  def deserialize(b : Any) : T = {
+    throw new RuntimeException("DummySerializer: cannot deserialize anything")
   }
 
 }
