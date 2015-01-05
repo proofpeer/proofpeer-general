@@ -8,10 +8,14 @@ trait Serializer[T, A] {
 
 }
 
+trait AtomicSerializer[T] extends Serializer[T, Any]
+
+trait CompoundSerializer[T] extends Serializer[T, Vector[Any]]
+
 object VectorSerializer {
 
-  def apply[T, A](serializer : Serializer[T, A]) : Serializer[Vector[T], Vector[A]] = 
-    new Serializer[Vector[T], Vector[A]] {
+  def apply[T](serializer : Serializer[T, _]) : CompoundSerializer[Vector[T]] = 
+    new CompoundSerializer[Vector[T]] {
       def serialize(v : Vector[T]) = v.map(x => serializer.serialize(x))
       def deserialize(b : Any) : Vector[T] = {
         b match {
@@ -25,8 +29,8 @@ object VectorSerializer {
 
 object ListSerializer {
 
-  def apply[T, A](serializer : Serializer[T, A]) : Serializer[List[T], Vector[A]] = 
-    new Serializer[List[T], Vector[A]] {
+  def apply[T](serializer : Serializer[T, _]) : CompoundSerializer[List[T]] = 
+    new CompoundSerializer[List[T]] {
       def serialize(v : List[T]) = v.map(x => serializer.serialize(x)).toVector
       def deserialize(b : Any) : List[T] = {
         b match {
@@ -40,8 +44,8 @@ object ListSerializer {
 
 object MapSerializer {
 
-  def apply[K, V](keySerializer : Serializer[K, _], valueSerializer : Serializer[V, _]) : Serializer[Map[K, V], Vector[Any]] =
-    new Serializer[Map[K, V], Vector[Any]] {
+  def apply[K, V](keySerializer : Serializer[K, _], valueSerializer : Serializer[V, _]) : CompoundSerializer[Map[K, V]] =
+    new CompoundSerializer[Map[K, V]] {
       def serialize(m : Map[K, V]) : Vector[Any] = {
         var result : List[Any] = List()
         for ((k, v) <- m) result = keySerializer.serialize(k) :: valueSerializer.serialize(v) :: result
@@ -69,8 +73,8 @@ object MapSerializer {
 
 object PairSerializer {
 
-  def apply[U, V](sU : Serializer[U, _], sV : Serializer[V, _]) : Serializer[(U, V), Vector[Any]] = 
-    new Serializer[(U, V), Vector[Any]] {
+  def apply[U, V](sU : Serializer[U, _], sV : Serializer[V, _]) : CompoundSerializer[(U, V)] = 
+    new CompoundSerializer[(U, V)] {
       def serialize(uv : (U, V)) : Vector[Any] = Vector(sU.serialize(uv._1), sV.serialize(uv._2))
       def deserialize(b : Any) : (U, V) = {
         b match {
@@ -84,8 +88,8 @@ object PairSerializer {
 
 object TripleSerializer {
 
-  def apply[U, V, W](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _]) : Serializer[(U, V, W), Vector[Any]] = 
-    new Serializer[(U, V, W), Vector[Any]] {
+  def apply[U, V, W](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _]) : CompoundSerializer[(U, V, W)] = 
+    new CompoundSerializer[(U, V, W)] {
       def serialize(uvw : (U, V, W)) : Vector[Any] = Vector(sU.serialize(uvw._1), sV.serialize(uvw._2), sW.serialize(uvw._3))
       def deserialize(b : Any) : (U, V, W) = {
         b match {
@@ -99,8 +103,8 @@ object TripleSerializer {
 
 object QuadrupleSerializer {
 
-  def apply[U, V, W, X](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _]) : Serializer[(U, V, W, X), Vector[Any]] = 
-    new Serializer[(U, V, W, X), Vector[Any]] {
+  def apply[U, V, W, X](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _]) : CompoundSerializer[(U, V, W, X)] = 
+    new CompoundSerializer[(U, V, W, X)] {
       def serialize(uvwx : (U, V, W, X)) : Vector[Any] = Vector(sU.serialize(uvwx._1), sV.serialize(uvwx._2), sW.serialize(uvwx._3), sX.serialize(uvwx._4))
       def deserialize(b : Any) : (U, V, W, X) = {
         b match {
@@ -114,8 +118,8 @@ object QuadrupleSerializer {
 
 object QuintupleSerializer {
 
-  def apply[U, V, W, X, Y](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _], sY : Serializer[Y, _]) : Serializer[(U, V, W, X, Y), Vector[Any]] = 
-    new Serializer[(U, V, W, X, Y), Vector[Any]] {
+  def apply[U, V, W, X, Y](sU : Serializer[U, _], sV : Serializer[V, _], sW : Serializer[W, _], sX : Serializer[X, _], sY : Serializer[Y, _]) : CompoundSerializer[(U, V, W, X, Y)] = 
+    new CompoundSerializer[(U, V, W, X, Y)] {
       def serialize(uvwxy : (U, V, W, X, Y)) : Vector[Any] = Vector(sU.serialize(uvwxy._1), sV.serialize(uvwxy._2), sW.serialize(uvwxy._3), sX.serialize(uvwxy._4), sY.serialize(uvwxy._5))
       def deserialize(b : Any) : (U, V, W, X, Y) = {
         b match {
@@ -129,8 +133,8 @@ object QuintupleSerializer {
 
 object OptionSerializer {
 
-  def apply[U, A](serializer : Serializer[U, A]) : Serializer[Option[U], Vector[A]] = {
-    new Serializer[Option[U], Vector[A]] {
+  def apply[U, A](serializer : Serializer[U, A]) : CompoundSerializer[Option[U]] = {
+    new CompoundSerializer[Option[U]] {
       def serialize(opt : Option[U]) : Vector[A] = {
         if (opt.isDefined) Vector(serializer.serialize(opt.get)) else Vector()
       }
@@ -145,9 +149,9 @@ object OptionSerializer {
   }
 }
 
-object StringSerializer extends Serializer[String, String] {
+object StringSerializer extends AtomicSerializer[String] {
 
-  def serialize(s : String) : String = s
+  def serialize(s : String) : Any = s
 
   def deserialize(b : Any) : String = {
     b match {
@@ -158,9 +162,9 @@ object StringSerializer extends Serializer[String, String] {
 
 }
 
-object BooleanSerializer extends Serializer[Boolean, Int] {
+object BooleanSerializer extends AtomicSerializer[Boolean] {
 
-  def serialize(x : Boolean) : Int = if (x) 1 else 0
+  def serialize(x : Boolean) : Any = if (x) 1 else 0
 
   def deserialize(b : Any) : Boolean = {
     b match {
@@ -171,9 +175,9 @@ object BooleanSerializer extends Serializer[Boolean, Int] {
 
 }
 
-object IntSerializer extends Serializer[Int, Int] {
+object IntSerializer extends AtomicSerializer[Int] {
 
-  def serialize(x : Int) : Int = x
+  def serialize(x : Int) : Any = x
 
   def deserialize(b : Any) : Int = {
     b match {
@@ -184,9 +188,9 @@ object IntSerializer extends Serializer[Int, Int] {
 
 }
 
-object LongSerializer extends Serializer[Long, Long] {
+object LongSerializer extends AtomicSerializer[Long] {
 
-  def serialize(x : Long) : Long = x
+  def serialize(x : Long) : Any = x
 
   def deserialize(b : Any) : Long = {
     b match {
@@ -197,7 +201,7 @@ object LongSerializer extends Serializer[Long, Long] {
 
 }
 
-object BigIntSerializer extends Serializer[BigInt, Any] {
+object BigIntSerializer extends AtomicSerializer[BigInt] {
 
   def serialize(x : BigInt) : Any = {
     if (x >= Long.MinValue && x <= Long.MaxValue) x.toLong else x.toString
@@ -213,7 +217,7 @@ object BigIntSerializer extends Serializer[BigInt, Any] {
 
 }
 
-trait CaseClassSerializerBase[T] extends Serializer[T, Vector[Any]] {
+trait CaseClassSerializerBase[T] extends CompoundSerializer[T] {
   
   def decomposeAndSerialize(obj : T) : (Int, Vector[Any])
   
@@ -239,7 +243,7 @@ trait CaseClassSerializerBase[T] extends Serializer[T, Vector[Any]] {
 class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename : String = "Any") {
 
   /** Override and correct this method if you get type checking errors from the generated code. */
-  protected def isVectorSerializer(serializerSpec : String) : Boolean = !isAtomicSerializer(serializerSpec)
+  protected def isCompoundSerializer(serializerSpec : String) : Boolean = !isAtomicSerializer(serializerSpec)
 
   protected def isAtomicSerializer(serializerSpec : String) : Boolean = {
     val atomicSerializers = Vector("StringSerializer", "BooleanSerializer", "IntSerializer", "LongSerializer", "BigIntSerializer")
@@ -306,7 +310,7 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
         case 0 =>
           println(SPACES + "case " + name + " =>")
           println(SPACES + "  (Kind." + NAME + ", Vector())")
-        case 1 if isVectorSerializer(args(0)) =>
+        case 1 if isCompoundSerializer(args(0)) =>
           println(SPACES + "case " + name + "(x) =>")
           println(SPACES + "  (Kind." + NAME + ", Serializers." + NAME + ".serialize(x))")
         case 1 =>
@@ -333,7 +337,7 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
         case 0 =>
           println(SPACES + "case Kind." + NAME + " if args.size == 0 => ")
           println(SPACES + "  " + name)
-        case 1 if isVectorSerializer(args(0)) =>
+        case 1 if isCompoundSerializer(args(0)) =>
           println(SPACES + "case Kind." + NAME + " => ")
           println(SPACES + "  " + name + "(Serializers." + NAME + ".deserialize(args))")
         case 1 =>
@@ -369,9 +373,9 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
 
 }
 
-class SpecializedSerializer[T, S <: T, A](serializer : Serializer[T, A]) extends Serializer[S, A] {
+class TypecastSerializer[T, S, A](serializer : Serializer[T, A]) extends Serializer[S, A] {
 
-  def serialize(special : S) : A = serializer.serialize(special)
+  def serialize(s : S) : A = serializer.serialize(s.asInstanceOf[T])
 
   def deserialize(serialized : Any) : S = {
     serializer.deserialize(serialized).asInstanceOf[S]
