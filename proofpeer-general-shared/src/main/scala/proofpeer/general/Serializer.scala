@@ -38,6 +38,21 @@ object ListSerializer {
 
 }
 
+object SetSerializer {
+
+  def apply[T](serializer : Serializer[T]) : Serializer[Set[T]] = 
+    new Serializer[Set[T]] {
+      def serialize(v : Set[T]) = v.map(x => serializer.serialize(x))
+      def deserialize(b : Any) : Set[T] = {
+        b match {
+          case v : Vector[Any] => v.map(x => serializer.deserialize(x)).toSet
+          case _ => throw new RuntimeException("SetSerializer: cannot deserialize " + b)
+        }
+      }
+    }
+
+}
+
 object MapSerializer {
 
   def apply[K, V](keySerializer : Serializer[K], valueSerializer : Serializer[V]) : Serializer[Map[K, V]] =
