@@ -358,15 +358,16 @@ class CaseClassSerializerTool(basename : String, cases : Vector[Any], typename :
 
 }
 
-class TypecastSerializer[T, S](serializer : Serializer[T]) extends Serializer[S] {
+class TransformSerializer[S, T](serializer : Serializer[T], transformST : S => T, transformTS : T => S) extends Serializer[S] {
 
-  def serialize(s : S) = serializer.serialize(s.asInstanceOf[T])
+  def serialize(s : S) : Any = serializer.serialize(transformST(s))
 
-  def deserialize(serialized : Any) : S = {
-    serializer.deserialize(serialized).asInstanceOf[S]
-  }
+  def deserialize(b : Any) : S = transformTS(serializer.deserialize(b))
 
 }
+
+class TypecastSerializer[T, S](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
+  _.asInstanceOf[T], _.asInstanceOf[S])
 
 class DummySerializer[T] extends Serializer[T] {
 
@@ -379,6 +380,8 @@ class DummySerializer[T] extends Serializer[T] {
   }
 
 }
+
+
 
 
 
