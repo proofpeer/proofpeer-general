@@ -381,7 +381,7 @@ class TransformSerializer[S, T](serializer : Serializer[T], transformST : S => T
 
 }
 
-class TypecastSerializer[T, S](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
+class TypecastSerializer[S, T](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
   _.asInstanceOf[T], _.asInstanceOf[S])
 
 class DummySerializer[T] extends Serializer[T] {
