@@ -381,8 +381,18 @@ class TransformSerializer[S, T](serializer : Serializer[T], transformST : S => T
 
 }
 
-class TypecastSerializer[S, T](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
+ class TypecastSerializer[S, T](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
   _.asInstanceOf[T], _.asInstanceOf[S])
+
+ abstract class NestedSerializer[T] extends Serializer[T] {
+
+  protected val innerSerializer : Serializer[T]
+
+  def serialize(x : T) : Any = innerSerializer.serialize(x)
+
+  def deserialize(b : Any) : T = innerSerializer.deserialize(b)
+
+}
 
 class DummySerializer[T] extends Serializer[T] {
 
@@ -396,15 +406,16 @@ class DummySerializer[T] extends Serializer[T] {
 
 }
 
-abstract class NestedSerializer[T] extends Serializer[T] {
+class TrashSerializer[T <: AnyRef] extends Serializer[T] {
 
-  protected def innerSerializer : Serializer[T]
+  def serialize(t : T) : Any = {
+    null
+  }
 
-  protected def thisSerializer : Serializer[T] = this
+  def deserialize(b : Any) : T = {
+    null.asInstanceOf[T]
+  }
 
-  def serialize(x : T) : Any = innerSerializer.serialize(x)
-
-  def deserialize(b : Any) : T = innerSerializer.deserialize(b)
 
 }
 
