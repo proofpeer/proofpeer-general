@@ -396,6 +396,18 @@ class DummySerializer[T] extends Serializer[T] {
 
 }
 
+abstract class NestedSerializer[T] extends Serializer[T] {
+
+  protected def innerSerializer : Serializer[T]
+
+  protected def thisSerializer : Serializer[T] = this
+
+  def serialize(x : T) : Any = innerSerializer.serialize(x)
+
+  def deserialize(b : Any) : T = innerSerializer.deserialize(b)
+
+}
+
 
 
 
