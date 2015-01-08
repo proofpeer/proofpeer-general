@@ -406,19 +406,6 @@ class DummySerializer[T] extends Serializer[T] {
 
 }
 
-class TrashSerializer[T <: AnyRef] extends Serializer[T] {
-
-  def serialize(t : T) : Any = {
-    null
-  }
-
-  def deserialize(b : Any) : T = {
-    null.asInstanceOf[T]
-  }
-
-
-}
-
 
 
 
