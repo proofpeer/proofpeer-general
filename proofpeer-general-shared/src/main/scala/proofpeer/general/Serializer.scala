@@ -1,5 +1,11 @@
 package proofpeer.general
 
+/** A serializer converts a type T to a data structure S, where S is one of the following
+  * 1) Long
+  * 2) String
+  * 3) Vector of S
+  * 4) (Bytes) (in proofpeer.general, none of the serializers except BytesSerializer transforms to Bytes)
+  */ 
 trait Serializer[T] {
 
   def serialize(t : T) : Any
@@ -15,7 +21,7 @@ object VectorSerializer {
       def serialize(v : Vector[T]) = v.map(x => serializer.serialize(x))
       def deserialize(b : Any) : Vector[T] = {
         b match {
-          case v : Seq[Any] => v.map(x => serializer.deserialize(x)).toVector
+          case v : Vector[Any] => v.map(x => serializer.deserialize(x)).toVector
           case _ => throw new RuntimeException("VectorSerializer: cannot deserialize " + b)
         }
       }
@@ -27,10 +33,10 @@ object ListSerializer {
 
   def apply[T](serializer : Serializer[T]) : Serializer[List[T]] = 
     new Serializer[List[T]] {
-      def serialize(v : List[T]) = v.map(x => serializer.serialize(x))
+      def serialize(v : List[T]) = v.map(x => serializer.serialize(x)).toVector
       def deserialize(b : Any) : List[T] = {
         b match {
-          case v : Seq[Any] => v.map(x => serializer.deserialize(x)).toList
+          case v : Vector[Any] => v.map(x => serializer.deserialize(x)).toList
           case _ => throw new RuntimeException("ListSerializer: cannot deserialize " + b)
         }
       }
@@ -45,7 +51,7 @@ object SetSerializer {
       def serialize(v : Set[T]) = v.map(x => serializer.serialize(x)).toVector
       def deserialize(b : Any) : Set[T] = {
         b match {
-          case v : Seq[Any] => v.map(x => serializer.deserialize(x)).toSet
+          case v : Vector[Any] => v.map(x => serializer.deserialize(x)).toSet
           case _ => throw new RuntimeException("SetSerializer: cannot deserialize " + b)
         }
       }
@@ -60,12 +66,11 @@ object MapSerializer {
       def serialize(m : Map[K, V]) : Any = {
         var result : List[Any] = List()
         for ((k, v) <- m) result = keySerializer.serialize(k) :: valueSerializer.serialize(v) :: result
-        result
+        result.toVector
       }
       def deserialize(b : Any) : Map[K, V] = {
         b match {
-          case s : Seq[Any] if s.size % 2 == 0 =>
-            val v = s.toVector
+          case v : Vector[Any] if v.size % 2 == 0 =>
             var m : Map[K, V] = Map()
             val size = v.size
             var i = 0
@@ -176,11 +181,11 @@ object StringSerializer extends Serializer[String] {
 
 object BooleanSerializer extends Serializer[Boolean] {
 
-  def serialize(x : Boolean) = if (x) 1 else 0
+  def serialize(x : Boolean) = if (x) 1L else 0L
 
   def deserialize(b : Any) : Boolean = {
-    if (b == 0) false
-    else if (b == 1) true
+    if (b == 0L) false
+    else if (b == 1L) true
     else throw new RuntimeException("BooleanSerializer: cannot deserialize " + b)
   }
 
@@ -188,11 +193,10 @@ object BooleanSerializer extends Serializer[Boolean] {
 
 object IntSerializer extends Serializer[Int] {
 
-  def serialize(x : Int) = x
+  def serialize(x : Int) = x.toLong
 
   def deserialize(b : Any) : Int = {
     b match {
-      case x : Int => x
       case x : Long => x.toInt
       case _ => throw new RuntimeException("IntSerializer: cannot deserialize " + b)
     }
@@ -238,29 +242,23 @@ trait CaseClassSerializerBase[T] extends Serializer[T] {
   def serialize(obj : T) : Any = {
     val (kind, args) = decomposeAndSerialize(obj)
     args match {
-      case None => kind
-      case Some(args) => Vector(kind, args)
+      case None => kind.toLong
+      case Some(args) => Vector(kind.toLong, args)
     }
   }
 
   def determineKind(b : Any) : Int = {
     b match {
-      case kind : Int => kind
       case kind : Long => kind.toInt
       case Vector(kind : Long, _) => kind.toInt
-      case Vector(kind : Int, _) => kind
       case _ => throw new RuntimeException("Cannot determine kind: " + b)
     }    
   }
 
   def deserialize(b : Any) : T = {
     b match {
-      case kind : Int =>
-        deserializeAndCompose(kind, None)
       case kind : Long =>
         deserializeAndCompose(kind.toInt, None)
-      case Vector(kind : Int, args) =>
-        deserializeAndCompose(kind, Some(args))
       case Vector(kind : Long, args) =>
         deserializeAndCompose(kind.toInt, Some(args))
       case _ => throw new RuntimeException("Cannot deserialize: " + b)
@@ -396,10 +394,10 @@ class TransformSerializer[S, T](serializer : Serializer[T], transformST : S => T
 
 }
 
- class TypecastSerializer[S, T](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
+class TypecastSerializer[S, T](serializer : Serializer[T]) extends TransformSerializer[S, T](serializer,
   _.asInstanceOf[T], _.asInstanceOf[S])
 
- abstract class NestedSerializer[T] extends Serializer[T] {
+abstract class NestedSerializer[T] extends Serializer[T] {
 
   protected val innerSerializer : Serializer[T]
 
