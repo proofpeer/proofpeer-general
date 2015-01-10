@@ -233,6 +233,18 @@ object BigIntSerializer extends Serializer[BigInt] {
 
 }
 
+object BytesSerializer extends Serializer[Bytes] {
+
+  def serialize(bs : Bytes) : Any = bs
+
+  def deserialize(b : Any) : Bytes = {
+    b match {
+      case bs : Bytes => bs
+      case _ => throw new RuntimeException("BytesSerializer: cannot deserialize " + b)
+    }
+  }
+}
+
 trait CaseClassSerializerBase[T] extends Serializer[T] {
   
   def decomposeAndSerialize(obj : T) : (Int, Option[Any])
