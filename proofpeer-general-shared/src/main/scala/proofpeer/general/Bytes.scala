@@ -44,7 +44,7 @@ class Bytes private (bytes : Vector[Byte]) {
     */
   def asString : String = StringUtils.fromUtf8Bytes(bytes)
 
-  /** Decodes this byte sequence via [[Bytes.decode]]. */
+  /** Decodes this byte sequence via Bytes.decode . */
   def decode : Any = {
     val (value, len) = Bytes.decode(this, 0)
     if (len != length) throw new RuntimeException("cannot decode, trailing " + (length - len) + " bytes")
@@ -453,6 +453,12 @@ object Bytes {
         (elems.toVector, pos - from)
       case t => error("decode, type = " + t)
     }
+  }
+
+  def decode(b : Bytes) : Any = {
+    val (d, len) = decode(b, 0)
+    if (len != b.length) throw new RuntimeException("Decoding Bytes resulted in left-over data.")
+    d
   }
 
   /** Encodes the same kind of values as [[encode]] into strings. These strings are just treated

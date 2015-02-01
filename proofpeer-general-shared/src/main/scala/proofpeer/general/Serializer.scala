@@ -4,7 +4,7 @@ package proofpeer.general
   * 1) Long
   * 2) String
   * 3) Vector of S
-  * 4) (Bytes) (in proofpeer.general, none of the serializers except BytesSerializer transforms to Bytes)
+  * 4) Bytes (in proofpeer.general, none of the serializers except BytesSerializer transforms to Bytes)
   */ 
 trait Serializer[T] {
 
@@ -160,6 +160,27 @@ object OptionSerializer {
           case Vector() => None
           case Vector(u) => Some(serializer.deserialize(u))
           case _ => throw new RuntimeException("OptionSerializer: cannot deserialize " + b)
+        }
+      }
+    }
+  }
+}
+
+object EitherSerializer {
+
+  def apply[U, V](serializerU : Serializer[U], serializerV : Serializer[V]) : Serializer[Either[U, V]] = {
+    new Serializer[Either[U, V]] {
+      def serialize(either : Either[U, V]) = {
+        either match {
+          case Left(u) => Vector(0L, serializerU.serialize(u))
+          case Right(v) => Vector(1L, serializerV.serialize(v))
+        }
+      }
+      def deserialize(b : Any) : Either[U, V] = {
+        b match {
+          case Vector(0L, y) => Left(serializerU.deserialize(y))
+          case Vector(1L, y) => Right(serializerV.deserialize(y))
+          case _ => throw new RuntimeException("EitherSerializer: cannot deserialize " + b)
         }
       }
     }

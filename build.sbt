@@ -12,6 +12,7 @@ lazy val rootJS = project.in(file("proofpeer-general-js")).settings(scalaJSSetti
   name := "proofpeer-general", 
   organization := "net.proofpeer", 
   scalaVersion := "2.11.2",
+  scalacOptions += "-deprecation",
   unmanagedSourceDirectories in Compile +=
     (baseDirectory.value / "..") / "proofpeer-general-shared" / "src" / "main" / "scala"
 )
@@ -20,6 +21,7 @@ lazy val rootJVM = project.in(file("proofpeer-general-jvm")).settings(
   name := "proofpeer-general",
   organization := "net.proofpeer",
   scalaVersion := "2.11.2",
+  scalacOptions += "-deprecation",
   libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test",
   unmanagedSourceDirectories in Compile +=
     (baseDirectory.value / "..") / "proofpeer-general-shared" / "src" / "main" / "scala"
