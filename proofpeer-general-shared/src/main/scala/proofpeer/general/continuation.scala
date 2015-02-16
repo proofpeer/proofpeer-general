@@ -39,21 +39,20 @@ object TestContinuation {
   import continuation._
 
   def even(n : Long, depth : Int, cont : Continuation[Boolean, Boolean]) : Thunk[Boolean] = {
-    if (depth > 1000) Thunk.computation(() => even(n, 0, cont))
+    if (depth > 5) Thunk.computation(() => even(n, 0, cont))
     else if (n == 0) cont(true)
     else odd(n - 1, depth + 1, cont)
   }
 
   def odd(n : Long, depth : Int, cont : Continuation[Boolean, Boolean]) : Thunk[Boolean] = {
-    if (depth > 1000) Thunk.computation(() => odd(n, 0, cont))
+    if (depth > 5) Thunk.computation(() => odd(n, 0, cont))
     else if (n == 0) cont(false)
     else even(n - 1, depth + 1, cont)
   }
 
-  def main(args : Array[String]) {
-    val t = even(100000000L, 0, (r => Thunk.value(r)))
+  def _main(args : Array[String]) {
+    val t = even(10000000000L, 0, (r => Thunk.value(r)))
     println("t = " + t())
   }
 
 }
-

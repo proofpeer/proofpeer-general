@@ -184,6 +184,30 @@ object StringUtils {
     e3
   }  
 
+  def urlDecode(encoded : String) : String = {
+    var bytes : Vector[Byte] = Vector()
+    val len = encoded.length
+    var i = 0
+    while (i < len) {
+      val c = encoded(i)
+      if (c == '%') {
+        val s = encoded.substring(i + 1, i + 3)
+        algorithms.HexString.toBytes(s) match {
+          case Some(Array(b)) =>
+            bytes = bytes :+ b
+          case _ =>
+            throw new RuntimeException("invalid hex string: '" + s + "'")
+        }
+        i = i + 3
+      } else {
+        val b = c.toByte
+        bytes = bytes :+ b
+        i = i + 1
+      }
+    }
+    fromUtf8Bytes(bytes)
+  }
+
 }
 
 class CaseInsensitiveString private (content : String) {
