@@ -1,28 +1,20 @@
-name := "ProofPeer General"
+lazy val root = project.in(file(".")).aggregate(fooJS, fooJVM).
+  settings(
+    publish := {},
+    publishLocal := {}
+  )
 
-organization := "net.proofpeer"
+lazy val foo = crossProject.in(file(".")).
+  settings(
+    name := "ProofPeer General",
+    organization := "net.proofpeer",
+    version := "0.1-SNAPSHOT",
+    scalaVersion := "2.11.5",
+    scalacOptions += "-deprecation"
+  ).
+  jvmSettings(
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
+  )
 
-version := "0.1-SNAPSHOT"
-
-scalaVersion := "2.11.2"
-
-lazy val root = project.in(file(".")).aggregate(rootJS, rootJVM)
-
-lazy val rootJS = project.in(file("proofpeer-general-js")).settings(scalaJSSettings: _*).settings(
-  name := "proofpeer-general", 
-  organization := "net.proofpeer", 
-  scalaVersion := "2.11.2",
-  scalacOptions += "-deprecation",
-  unmanagedSourceDirectories in Compile +=
-    (baseDirectory.value / "..") / "proofpeer-general-shared" / "src" / "main" / "scala"
-)
-
-lazy val rootJVM = project.in(file("proofpeer-general-jvm")).settings(
-  name := "proofpeer-general",
-  organization := "net.proofpeer",
-  scalaVersion := "2.11.2",
-  scalacOptions += "-deprecation",
-  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test",
-  unmanagedSourceDirectories in Compile +=
-    (baseDirectory.value / "..") / "proofpeer-general-shared" / "src" / "main" / "scala"
-)
+lazy val fooJS = foo.js
+lazy val fooJVM = foo.jvm
