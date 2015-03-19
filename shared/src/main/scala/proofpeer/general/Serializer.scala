@@ -440,6 +440,18 @@ abstract class NestedSerializer[T] extends Serializer[T] {
 
 }
 
+object NullableSerializer {
+
+  def apply[U >: Null <: AnyRef](serializer : Serializer[U]) : Serializer[U] = {
+    def transformST(s : U) : Option[U] = 
+      if (s == null) None else Some(s)
+    def transformTS(t : Option[U]) : U = 
+      if (t.isDefined) t.get else null
+    new TransformSerializer[U, Option[U]](OptionSerializer(serializer), transformST _, transformTS _)
+  }
+
+}
+
 class DummySerializer[T] extends Serializer[T] {
 
   def serialize(t : T) : Any = {
