@@ -73,6 +73,20 @@ object StringUtils {
     builder.toString
   }
 
+  def fromCodePoint(codepoint : Int) : Option[String] = {
+    val builder = new StringBuilder(2)
+    if ((codepoint >= 0 && codepoint <= 0xD7FF) || (codepoint >= 0xE000 && codepoint <= 0xFFFF)) {
+      builder.append(codepoint.toChar)
+    } else if (codepoint >= 0x10000 && codepoint <= 0x10FFFF) {
+      val cp = codepoint - 0x10000
+      val hi = ((cp >> 10) & 0x3FF) + 0xD800
+      val lo = (cp & 0x3FF) + 0xDC00
+      builder.append(hi.toChar)
+      builder.append(lo.toChar)
+    } else return None  
+    Some(builder.toString)  
+  }
+
   def utf8Bytes(s : String) : Vector[Byte] = {
     var v : Vector[Byte] = Vector()
     val codes = codePoints(s)
