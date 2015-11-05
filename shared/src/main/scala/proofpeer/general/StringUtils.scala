@@ -45,6 +45,20 @@ object StringUtils {
     } else code
   }
 
+  def optionalCodePointAt(s : String, index : Int) : Option[Int] = {
+    if (index >= s.size) return None
+    val code : Int = s.charAt(index)
+    if (code >= 0xD800 && code <= 0xDFFF) {
+      if (index >= s.size) return None
+      val hi : Int = code
+      val lo : Int = s.charAt(index+1)
+      if (hi < 0xDC00 && lo >= 0xDC00 && lo <= 0xDFFF) {
+        Some(((hi - 0xD800) << 10) + (lo - 0xDC00) + 0x10000)
+      } else None
+    } else Some(code)
+  }
+
+
   def codePoints(s : String) : Vector[Int] = {
     var index = 0
     var v : Vector[Int] = Vector()
